@@ -24,8 +24,20 @@ import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Stroke;
 
+/**
+ * The controller class controls most things that are happening on screen.
+ * Moving, resizing, selecting, unselecting shapes all happens here.
+ * And some handling of data for entities and ropes.
+ */
 @SuppressWarnings("serial")
 public class Controller extends JPanel implements ActionListener, MouseMotionListener, KeyListener, MouseListener {
+    /**
+     * Declaration of variables. Multiple array lists to store all the
+     * ropes, entities, shapes, and selected shapes. finals to hold the color
+     * of selected shapes and the selected stroke. Variables to hold the shape that is being resized,
+     * the direction it is being resized, and its position. Also variables to hold the mouses x and y postion,
+     * and two graphics components.
+     */
 	Gui gui;
 	ArrayList<Rope> ropes = new ArrayList<Rope>();
 	ArrayList<Entity> entities = new ArrayList<Entity>();
@@ -42,6 +54,12 @@ public class Controller extends JPanel implements ActionListener, MouseMotionLis
 	Graphics2D g2 = null;
 	Graphics2D newG2 = null;
 
+    /**
+     * Class constructor with gui parameter which is the gui made in the Gui class.
+     * Initialises the gui variable to be the Gui, adds action listeners to all the buttons,
+     * and adds a key listener to the JPanel that contains the shapes. Also adds a mouse
+     * listener and mouse motion listener to the Gui.
+     */
 	public Controller(Gui gui) {
 		this.gui = gui;
 		this.setBackground(Color.WHITE);
@@ -55,6 +73,12 @@ public class Controller extends JPanel implements ActionListener, MouseMotionLis
 		addMouseMotionListener(this);
 	}
 
+    /**
+     * This procedure is called when the graphics component needs to be updated to
+     * show the correct shapes on screen. First each shape is drawn then the selected
+     * shapes are drawn on top on a different graphics component and that that graphics
+     * component is disposed.
+     */
 	@Override
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
@@ -75,6 +99,11 @@ public class Controller extends JPanel implements ActionListener, MouseMotionLis
 		}
 	}
 
+    /**
+     * This function checks where a mouse click is close to a shape.
+     * It does this by drawing another shape that is bigger than the shape in the parameter
+     * then it checks if the mouse events location is inside that shape.
+     */
 	private boolean isCloseTo(Shape shape, MouseEvent e) {
 		double minX = shape.getBounds().getMinX() - 10;
 		double minY = shape.getBounds().getMinY() - 10;
@@ -86,6 +115,11 @@ public class Controller extends JPanel implements ActionListener, MouseMotionLis
 		return false;
 	}
 
+    /**
+     * This procedure is called when a button is clicked. It works because this class
+     * is the action listener for all the buttons. It checks the source of the button pressed to work out
+     * which button it was then executes the correct procedure.
+     */
 	public void actionPerformed(ActionEvent actionEvent) {
 		if (actionEvent.getSource() == gui.addRope) {
 			addRope();
@@ -100,6 +134,11 @@ public class Controller extends JPanel implements ActionListener, MouseMotionLis
 		}
 	}
 
+    /**
+     * The procedure is called when the add rope button is pressed. It creates a new
+     * rope and adds it to ropes, then creates a Line2D and adds it to shapes and selected shapes.
+     * Then it repaints the graphics component and grabs focus of the jpContent JPanel.
+     */
 	private void addRope() {
 		Rope rope = new Rope();
 		ropes.add(rope);
@@ -110,6 +149,10 @@ public class Controller extends JPanel implements ActionListener, MouseMotionLis
 		gui.jpContent.grabFocus();
 	}
 
+    /**
+     * This procedure is called when the add object button is pressed. It does the same
+     * as the addRope procedure but instead of creating a Line2D it makes a Rectangle2D.
+     */
 	private void addObject() {
 		Entity entity = new Entity();
 		entities.add(entity);
@@ -120,12 +163,21 @@ public class Controller extends JPanel implements ActionListener, MouseMotionLis
 		gui.jpContent.grabFocus();
 	}
 
+    /**
+     * This procedure is called when the add pulley button is pressed. It makes
+     * a new rope and adds it to the list of ropes, then it also draws a circle with
+     * two lines coming off of it.
+     */
 	private void addPulley() {
 		Rope rope = new Rope();
 		ropes.add(rope);
 		gui.jpContent.grabFocus();
 	}
 
+    /**
+     * This procedure is called when the clear button is pressed. It clears all array lists
+     * and calls the repaint method to update the graphics component.
+     */
 	private void clearGui() {
 		ropes.clear();
 		entities.clear();
@@ -135,6 +187,10 @@ public class Controller extends JPanel implements ActionListener, MouseMotionLis
 		gui.jpContent.grabFocus();
 	}
 
+    /**
+     * This procedure is called when the solve button is pressed. It will create a new instance
+     * of the Solve class and work on solving the problem.
+     */
 	private void solve() {
 		gui.jpContent.grabFocus();
 	}
@@ -144,6 +200,10 @@ public class Controller extends JPanel implements ActionListener, MouseMotionLis
 		// TODO Auto-generated method stub
 	}
 
+    /**
+     * This procedure is called when a key is released as it is an action listener that was
+     * added to the Gui. It checks what key is released and calls the appropriate procedure.
+     */
 	@Override
 	public void keyReleased(KeyEvent e) {
 		if (e.getKeyCode() == KeyEvent.VK_DELETE) {
@@ -177,6 +237,12 @@ public class Controller extends JPanel implements ActionListener, MouseMotionLis
 
 	}
 
+    /**
+     * This function is used to tells if the mouse is near the right side of a shape.
+     * It does this in a similar way to the isCloseTo function by drawing a shape around
+     * the right side of the shape that is in the parameter then it checks if the mouse
+     * is inside that shape.
+     */
 	private boolean right(Shape shape, MouseEvent e) {
 		double x = shape.getBounds().getMaxX() - 10, y = shape.getBounds().getMinY() - 10;
 		Shape newShape = new Rectangle2D.Double(x, y, 20, shape.getBounds().getHeight() + 20);
@@ -186,6 +252,10 @@ public class Controller extends JPanel implements ActionListener, MouseMotionLis
 		return false;
 	}
 
+    /**
+     * This function checks if the mouse is near to the bottom of a shape. It does this
+     * in a similar way to the right function.
+     */
 	private boolean bottom(Shape shape, MouseEvent e) {
 		double x = shape.getBounds().getMinX() - 10, y = shape.getBounds().getMaxY() - 10;
 		Shape newShape = new Rectangle2D.Double(x, y, shape.getBounds().getWidth() + 20, 20);
@@ -195,6 +265,10 @@ public class Controller extends JPanel implements ActionListener, MouseMotionLis
 		return false;
 	}
 
+    /**
+     * This function checks if the mouse is near to the left of a shape. It does this
+     * in a similar way to the right function.
+     */
 	private boolean left(Shape shape, MouseEvent e) {
 		double x = shape.getBounds().getMinX() - 10, y = shape.getBounds().getMinY() - 10;
 		Shape newShape = new Rectangle2D.Double(x, y, 20, shape.getBounds().getHeight() + 20);
@@ -204,6 +278,10 @@ public class Controller extends JPanel implements ActionListener, MouseMotionLis
 		return false;
 	}
 
+    /**
+     * This function checks if the mouse is near to the top of a shape. It does this
+     * in a similar way to the right function.
+     */
 	private boolean top(Shape shape, MouseEvent e) {
 		double x = shape.getBounds().getMinX() - 10, y = shape.getBounds().getMinY() - 10;
 		Shape newShape = new Rectangle2D.Double(x, y, shape.getBounds().getWidth() + 20, 20);
@@ -212,7 +290,11 @@ public class Controller extends JPanel implements ActionListener, MouseMotionLis
 		}
 		return false;
 	}
-	
+
+    /**
+     * This procedure is called to resized an entity(Rectangle2D). It checks which side
+     * of the shape the mouse is at then resizes it based on where the mouse is.
+     */
 	private void resizeRectangle(Shape shape, MouseEvent e, int i) {
 		Shape rectangle = null;
 		if ((bottom(shape, e) && right(shape, e) && direction == 0) || direction == 4) {
@@ -258,6 +340,7 @@ public class Controller extends JPanel implements ActionListener, MouseMotionLis
 			this.setCursor(new Cursor(Cursor.N_RESIZE_CURSOR));
 		}
 		try {
+		    // Check to make sure the rectangle does not get too small.
 			if (rectangle.getBounds().getWidth() < 20 || rectangle.getBounds().getHeight() < 20) {
 				resizedShape = shape;
 			} else if (rectangle != null && direction != 0) {
@@ -275,7 +358,11 @@ public class Controller extends JPanel implements ActionListener, MouseMotionLis
 			// ignore
 		} 
 	}
-	
+
+    /**
+     * This procedure resizes a rope (Line2D). It does this in a similar way to resizeRectangle
+     * by checking which side the mouse is on (right or left) and resizing it from there.
+     */
 	private void resizeLine(Shape shape, MouseEvent e, int i) {
 		Shape line = null;
 		if ((right(shape, e) && direction == 0) || direction == 3) {
@@ -289,6 +376,7 @@ public class Controller extends JPanel implements ActionListener, MouseMotionLis
 			this.setCursor(new Cursor(Cursor.W_RESIZE_CURSOR));
 		}
 		try {
+		    //Check to make sure it doesn't get too small.
 			if (line.getBounds().getWidth() < 20) {
 				resizedShape = shape;
 			} else if (line != null && direction != 0){
@@ -307,6 +395,10 @@ public class Controller extends JPanel implements ActionListener, MouseMotionLis
 		}
 	}
 
+    /**
+     * This procedure is called when the mouse is dragged. If left click is pressed a shape is resized,
+     * and if right click is pressed all selected shapes are moved.
+     */
 	@Override
 	public void mouseDragged(MouseEvent e) {
 		int prevX = mouseX;
@@ -356,6 +448,10 @@ public class Controller extends JPanel implements ActionListener, MouseMotionLis
 		repaint();
 	}
 
+    /**
+     * Updates the variables mouseX and MouseY to be the current postion of
+     * the mouse when it is moved if neither left or right click is pressed.
+     */
 	@Override
 	public void mouseMoved(MouseEvent e) {
 		if (!SwingUtilities.isRightMouseButton(e) && !SwingUtilities.isLeftMouseButton(e)) {
@@ -382,6 +478,13 @@ public class Controller extends JPanel implements ActionListener, MouseMotionLis
 		
 	}
 
+    /**
+     * Called when the mouse is pressed. If left click is pressed it goes through all the shapes
+     * checks if it is a line2d or rectangle2d then sees is the mouse is close to it.
+     * If it is it checks if control is pressed. If control is pressed it brings up
+     * an input field to enter data for the rope or entity. if it is not pressed
+     * it selects the shape if it is not selected and unselects if it is selected.
+     */
 	@Override
 	public void mousePressed(MouseEvent e) {
 		if (e.getButton() == MouseEvent.BUTTON1) {
@@ -484,7 +587,7 @@ public class Controller extends JPanel implements ActionListener, MouseMotionLis
 					}
 				}
 			}
-			if (addedShape == null) {
+			if (addedShape == null) { //if no new shape was selected then user might be trying to unselect a shape.
 				for (int i = 0; i < selectedShapes.size(); i++) {
 					for (int j = shapes.size() - 1; j >= 0; j--) {
 						if (!shapes.get(j).contains(shapes.get(j).getBounds().getCenterX(),
@@ -587,6 +690,12 @@ public class Controller extends JPanel implements ActionListener, MouseMotionLis
 		}
 	}
 
+    /**
+     * Procedure is called when a mouse button is released. It tells the program the
+     * user is no longer resizing a shape to it sets resizedShape to null, resets
+     * the direction and puts the index to outside of the array and it sets the curson
+     * to the default one.
+     */
 	@Override
 	public void mouseReleased(MouseEvent e) {
 		resizedShape = null;
