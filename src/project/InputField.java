@@ -24,13 +24,17 @@ public class InputField extends JPanel {
      * Creates a new InputField with the specified parameters to make it work.
      * It uses a JOptionPane with JTextFields to allow the user to enter data.
      */
-    public InputField(String title, List<String> options, int index) {
+
+    public InputField(String title, List<String> options, List<Double> values) {
         super(new GridLayout(0, 2));
         List<JTextField> fields = new ArrayList<>();
         data.clear();
         for (int i = 0; i < options.size(); i++) {
             super.add(new JLabel(options.get(i) + ": "));
             fields.add(new JTextField(10));
+            if (values.get(i) != 0.0 && values.get(i) != -1.0) {
+                fields.get(i).setText(values.get(i).toString());
+            }
             super.add(fields.get(i));
         }
         int result = JOptionPane.showConfirmDialog(null, this, title, JOptionPane.OK_CANCEL_OPTION);

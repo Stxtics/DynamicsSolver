@@ -8,10 +8,12 @@ import javax.swing.SwingUtilities;
 public class DynamicsSolver {
     @SuppressWarnings("unused")
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                Gui gui = new Gui();
-            }
-        });
+        //SwingUtilities.invokeLater(new Runnable() {
+        //public void run() {
+        //  Gui gui = new Gui();
+        //}
+        //});
+        Gui gui = new Gui();
+        new ControllerTest(gui);
     }
 }

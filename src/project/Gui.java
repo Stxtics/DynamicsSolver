@@ -21,6 +21,7 @@ public class Gui extends JFrame {
 	JButton clearGui = new JButton("Clear");
 	JButton solve = new JButton("Solve");
 	JPanel jpContent, jpButtons;
+	Content content;
 
 	/**
 	 * Contructor for the Gui class. This is called from the main class.
@@ -35,19 +36,20 @@ public class Gui extends JFrame {
 		this.setVisible(true);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.setFocusable(true);
+		content = new Content();
 		this.jpContent.grabFocus();
 	}
 
 	/**
 	 * This is a method that is called from the controller when the user has entered an incorrect value.
-	 * The parameter message is the text that is shown, the title in the windows title. 
+	 * The parameter message is the text that is shown, the title in the windows title.
 	 * This works by creating a JOptionPane.
 	 */
 	public void showInputError(String message, String title) {
 		JOptionPane.showMessageDialog(null, message, title, JOptionPane.INFORMATION_MESSAGE);
 	}
 
-	
+
 	/**
 	 * This method is called from the constructor of this class. It initialises the JPanels .
 	 * Adds the buttons to the JPanel that contains the buttons. Adds the JPanels to the JFrame.
@@ -56,6 +58,7 @@ public class Gui extends JFrame {
 	public void layoutComponents() {
 		this.setLayout(new BorderLayout());
 		jpContent = new JPanel(new BorderLayout());
+		jpContent.setBackground(Color.WHITE);
 		jpButtons = new JPanel(new FlowLayout());
 		jpButtons.setBackground(Color.WHITE);
 		jpButtons.add(addRope);
@@ -65,7 +68,7 @@ public class Gui extends JFrame {
 		jpButtons.add(solve);
 		this.add(jpButtons, BorderLayout.NORTH);
 		this.add(jpContent, BorderLayout.CENTER);
-		this.getContentPane().add(new Controller(this));
+		this.getContentPane().add(jpContent, BorderLayout.CENTER);
 		this.pack();
 	}
 }
