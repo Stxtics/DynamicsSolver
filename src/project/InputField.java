@@ -18,7 +18,7 @@ import java.util.List;
 @SuppressWarnings("serial")
 public class InputField extends JPanel {
     // data is used to store the data that the user enters into the input field
-    public List<String> data = new ArrayList<>();;
+    public List<String> data = new ArrayList<>();
 
     /**
      * Creates a new InputField with the specified parameters to make it work.
@@ -42,6 +42,21 @@ public class InputField extends JPanel {
             for (JTextField field : fields) {
                 this.data.add(field.getText());
             }
+        }
+    }
+
+    public InputField(String title, String option, double value) {
+        super(new GridLayout(0, 2));
+        JTextField field = new JTextField(10);
+        data.clear();
+        super.add(new JLabel(option + ": "));
+        if (value != 0.0 && value != -1.0) {
+            field.setText(String.valueOf(value));
+        }
+        super.add(field);
+        int result = JOptionPane.showConfirmDialog(null, this, title, JOptionPane.OK_CANCEL_OPTION);
+        if (result == JOptionPane.OK_OPTION) {
+            data.add(field.getText());
         }
     }
 }
