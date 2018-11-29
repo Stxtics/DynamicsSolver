@@ -8,28 +8,17 @@ public class Entity {
     /**
      * Variables of values that the entity can have.
      */
-	private double mass;
-	private double downForce;
-	private double upForce;
-	private double rightForce;
-	private double leftForce;
+	private Double mass;
+	private Double downForce;
+	private Double upForce;
+	private Double rightForce;
+	private Double leftForce;
 
     /**
      * Default constructor for the entity.
      */
 	public Entity() {
 
-	}
-
-    /**
-     * Constructor for an entity that sets data for it when it is made.
-     */
-	public Entity(double mass, double downForce, double upForce, double leftForce, double rightForce) {
-		this.mass = mass;
-		this.downForce = downForce;
-		this.upForce = upForce;
-		this.leftForce = leftForce;
-		this.rightForce = rightForce;
 	}
 
     /**
@@ -42,7 +31,7 @@ public class Entity {
     /**
      * Gets the mass of the Entity.
      */
-	public double getMass() {
+	public Double getMass() {
 		return this.mass;
 	}
 
@@ -56,7 +45,7 @@ public class Entity {
     /**
      * Gets the down force of the Entity.
      */
-	public double getDownForce() {
+	public Double getDownForce() {
 		return this.downForce;
 	}
 
@@ -70,7 +59,7 @@ public class Entity {
     /**
      * Gets the up force of the Entity.
      */
-	public double getUpForce() {
+	public Double getUpForce() {
 		return this.upForce;
 	}
 
@@ -84,7 +73,7 @@ public class Entity {
     /**
      * Gets the right force of the Entity.
      */
-	public double getRightForce() {
+	public Double getRightForce() {
 		return this.rightForce;
 	}
 
@@ -98,7 +87,7 @@ public class Entity {
     /**
      * Gets the left force of the Entity.
      */
-	public double getLeftForce() {
+	public Double getLeftForce() {
 		return this.leftForce;
 	}
 	

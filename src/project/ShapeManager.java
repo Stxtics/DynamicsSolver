@@ -10,16 +10,16 @@ import java.util.Arrays;
 import java.util.List;
 
 class ShapeManager {
-    private Content content;
-    private Gui gui;
-    int mouseX;
-    int mouseY;
+    int mouseX, mouseY, direction = 0, index = -1;
+    Double gravity = 9.8, coFriction, time, distance, acceleration, iVelocity, fVelocity;
+    boolean hasFriction = true;
     Shape resizedShape = null;
-    int direction = 0;
-    int index = -1;
-    private ArrayList<Rope> ropes = new ArrayList<>();
-    private ArrayList<Entity> entities = new ArrayList<>();
-    private java.util.List<Integer> positions = new ArrayList<>();
+    Content content;
+    Gui gui;
+    ArrayList<Rope> ropes = new ArrayList<>();
+    ArrayList<Entity> entities = new ArrayList<>();
+    List<Integer> positions = new ArrayList<>();
+
     ShapeManager(Gui gui) {
         this.gui = gui;
         content = gui.content;
@@ -229,7 +229,7 @@ class ShapeManager {
                 if (pos != -1) {
                     content.selectedShapes.set(pos, line);
                 } else {
-                    content. selectedShapes.add(line);
+                    content.selectedShapes.add(line);
                 }
             }
         } catch (NullPointerException e1) {
@@ -377,6 +377,22 @@ class ShapeManager {
         }
     }
 
+    void rotateShape(MouseEvent e, int prevX, int prevY) {
+        for (int i = 0; i < content.shapes.size(); i++) {
+            Shape shape = content.shapes.get(i);
+            if (isCloseTo(shape, e)) {
+                if (shape.getClass() == Line2D.Double.class) {
+                    Shape line = new Line2D.Double(e.getPoint().x, e.getPoint().y, shape.getBounds2D().getMaxX(), shape.getBounds2D().getY());
+                    content.shapes.set(i, line);
+                    int pos = content.shapes.indexOf(shape);
+                    content.shapes.set(pos, line);
+                } else if (shape.getClass() == Ellipse2D.Double.class) {
+
+                }
+            }
+        }
+    }
+
     /**
      * Allows the user to enter details for an rope when they ctrl + click on it.
      * The parameter i is the position of the rope in the shapes array. A user can only
@@ -385,21 +401,22 @@ class ShapeManager {
      */
     private void enterRopeDetails(int i) {
         String data = "Tension";
-        double value = ropes.get(positions.get(i)).getTension();
+        Double value = ropes.get(positions.get(i)).getTension();
         try {
-            String tensionS = new InputField("Rope Details - Leave blank if unknown", data, value).data.get(0);
-            if (tensionS.length() > 0) {
-                double tension = Double.parseDouble(tensionS);
-                if (tension > 0) {
-                    ropes.get(positions.get(i)).setTension(tension);
-                } else {
-                    gui.showInputError("Tension must be greater than 0.", "Error");
+            List<String> arr = new InputField("Rope Details - Leave blank if unknown", data, value).data;
+            if (arr.size() > 0) {
+                String tensionS = arr.get(0);
+                if (tensionS.length() > 0) {
+                    double tension = Double.parseDouble(tensionS);
+                    if (tension > 0) {
+                        ropes.get(positions.get(i)).setTension(tension);
+                    } else {
+                        gui.showMessageBox("Tension must be greater than 0.", "Error");
+                    }
                 }
-            } else {
-                ropes.get(positions.get(i)).setTension(-1);
             }
         } catch (NumberFormatException error) {
-            gui.showInputError("Tension must be a double.", "Error");
+            gui.showMessageBox("Tension must be a double.", "Error");
         }
     }
 
@@ -410,8 +427,8 @@ class ShapeManager {
      * are it sets those values on the entity.
      */
     private void enterObjectDetails(int i) {
-        java.util.List<String> data = Arrays.asList("Weight", "Down force", "Up force", "Left force", "Right force");
-        List<Double> values = Arrays.asList(entities.get(positions.get(i)).getMass(), entities.get(positions.get(i)).getDownForce(), entities.get(positions.get(i)).getUpForce(), entities.get(positions.get(i)).getRightForce(), entities.get(positions.get(i)).getLeftForce());
+        List<String> data = Arrays.asList("Weight", "Down force", "Up force", "Left force", "Right force");
+        List<Double> values = Arrays.asList(entities.get(positions.get(i)).getMass(), entities.get(positions.get(i)).getDownForce(), entities.get(positions.get(i)).getUpForce(), entities.get(positions.get(i)).getLeftForce(), entities.get(positions.get(i)).getRightForce());
         data = new InputField("Object Details - Leave blank if unknown", data, values).data;
         for (int j = 0; j < data.size(); j++) {
             if (data.get(j).length() > 0 && j == 0) {
@@ -420,49 +437,39 @@ class ShapeManager {
                     if (mass > 0) {
                         entities.get(positions.get(i)).setMass(mass);
                     } else {
-                        gui.showInputError("Weight must be greater than 0.", "Error");
+                        gui.showMessageBox("Weight must be greater than 0.", "Error");
                     }
                 } catch (NumberFormatException error) {
-                    gui.showInputError("Weight must be a double.", "Error");
+                    gui.showMessageBox("Weight must be a double.", "Error");
                 }
-            } else if (j == 0) {
-                entities.get(positions.get(i)).setMass(-1);
-            } else if (data.get(j).length() > 0 && j == 1) {
+            }  else if (data.get(j).length() > 0 && j == 1) {
                 try {
                     double downForce = Double.parseDouble(data.get(j));
                     entities.get(positions.get(i)).setDownForce(downForce);
                 } catch (NumberFormatException error) {
-                    gui.showInputError("Down force must be a double.", "Error");
+                    gui.showMessageBox("Down force must be a double.", "Error");
                 }
-            } else if (j == 1) {
-                entities.get(positions.get(i)).setDownForce(-1);
             } else if (data.get(j).length() > 0 && j == 2) {
                 try {
                     double upForce = Double.parseDouble(data.get(j));
                     entities.get(positions.get(i)).setUpForce(upForce);
                 } catch (NumberFormatException error) {
-                    gui.showInputError("Up force must be a double.", "Error");
+                    gui.showMessageBox("Up force must be a double.", "Error");
                 }
-            } else if (j == 2) {
-                entities.get(positions.get(i)).setUpForce(-1);
             } else if (data.get(j).length() > 0 && j == 3) {
-                try {
-                    double rightForce = Double.parseDouble(data.get(j));
-                    entities.get(positions.get(i)).setRightForce(rightForce);
-                } catch (NumberFormatException error) {
-                    gui.showInputError("Right force must be a double.", "Error");
-                }
-            } else if (j == 3) {
-                entities.get(positions.get(i)).setRightForce(-1);
-            } else if (data.get(j).length() > 0 && j == 4) {
                 try {
                     double leftForce = Double.parseDouble(data.get(j));
                     entities.get(positions.get(i)).setLeftForce(leftForce);
                 } catch (NumberFormatException error) {
-                    gui.showInputError("Left force must be a double.", "Error");
+                    gui.showMessageBox("Left force must be a double.", "Error");
                 }
-            } else if (j == 4) {
-                entities.get(positions.get(i)).setLeftForce(-1);
+            } else if (data.get(j).length() > 0 && j == 4) {
+                try {
+                    double rightForce = Double.parseDouble(data.get(j));
+                    entities.get(positions.get(i)).setRightForce(rightForce);
+                } catch (NumberFormatException error) {
+                    gui.showMessageBox("Right force must be a double.", "Error");
+                }
             }
         }
     }
@@ -587,8 +594,92 @@ class ShapeManager {
      * of the Solve class and work on solving the problem.
      */
     void solve() {
-        final Solver solver = new Solver(content);
-        solver.LinkRopesToEntities(ropes, entities, positions);
-        content.grabFocus();
+        hasFriction = (new SelectionField("Does this system have friction?").selections.size() > 0);
+        if (showSettingsPanel()) {
+            final Solver solver = new Solver(this);
+            solver.LinkRopesToEntities(ropes, entities);
+            if (solver.allRopesConnected(ropes)) {
+                ArrayList<String> selections;
+                if (hasFriction) {
+                    selections = new SelectionField("What do you want to find?", time, distance, acceleration, iVelocity, fVelocity, coFriction).selections;
+                } else {
+                    selections = new SelectionField("What do you want to find?", time, distance, acceleration, iVelocity, fVelocity, 5.0).selections;
+                }
+                if (selections.size() > 0) {
+                    solver.calculateSelections(selections);
+                } else {
+
+                }
+            } else {
+                gui.showMessageBox("Not all Ropes have been connected to an Object.", "Error");
+            }
+        }
+    }
+
+    boolean showSettingsPanel() {
+        List<String> data = Arrays.asList("Gravity", "Time (s)", "Distance (m)", "Acceleration (m/s/s)", "Initial Velocity (m/s)", "Final Velocity (m/s)");
+        List<Double> values = Arrays.asList(gravity, time, distance, acceleration, iVelocity, fVelocity);
+        if (hasFriction) {
+            data = Arrays.asList("Gravity", "Time (s)", "Distance (m)", "Acceleration (m/s/s)", "Initial Velocity (m/s)", "Final Velocity (m/s)", "μ");
+            values = Arrays.asList(gravity, time, distance, acceleration, iVelocity, fVelocity, coFriction);
+        }
+        data = new InputField("Settings", data, values).data;
+        for (int i = 0; i < data.size(); i++) {
+            if (data.get(i).length() > 0 && i == 0) {
+                try {
+                    gravity = Double.parseDouble(data.get(i));
+                } catch (NumberFormatException error) {
+                    gui.showMessageBox("Gravity must be a double.", "Error");
+                    return false;
+                }
+            }  else if (data.get(i).length() > 0 && i == 1) {
+                try {
+                    if (Double.parseDouble(data.get(i)) > 0) {
+                        time = Double.parseDouble(data.get(i));
+                    } else {
+                        gui.showMessageBox("Time must be greater than 0.", "Error");
+                    }
+                } catch (NumberFormatException error) {
+                    gui.showMessageBox("Time must be a double.", "Error");
+                    return false;
+                }
+            } else if (data.get(i).length() > 0 && i == 2) {
+                try {
+                    distance = Double.parseDouble(data.get(i));
+                } catch (NumberFormatException error) {
+                    gui.showMessageBox("Distance must be a double.", "Error");
+                    return false;
+                }
+            } else if (data.get(i).length() > 0 && i == 3) {
+                try {
+                    acceleration = Double.parseDouble(data.get(i));
+                } catch (NumberFormatException error) {
+                    gui.showMessageBox("Acceleration must be a double.", "Error");
+                    return false;
+                }
+            } else if (data.get(i).length() > 0 && i == 4) {
+                try {
+                    iVelocity = Double.parseDouble(data.get(i));
+                } catch (NumberFormatException error) {
+                    gui.showMessageBox("Initial velocity must be a double.", "Error");
+                    return false;
+                }
+            } else if (data.get(i).length() > 0 && i == 5) {
+                try {
+                    fVelocity = Double.parseDouble(data.get(i));
+                } catch (NumberFormatException error) {
+                    gui.showMessageBox("Final velocity must be a double.", "Error");
+                    return false;
+                }
+            } else if (data.get(i).length() > 0 && i == 6) {
+                try {
+                    coFriction = Double.parseDouble(data.get(i));
+                } catch (NumberFormatException error) {
+                    gui.showMessageBox("μ must be a double.", "Error");
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }

@@ -44,7 +44,7 @@ public class Gui extends JFrame {
 	 * The parameter message is the text that is shown, the title in the windows title. 
 	 * This works by creating a JOptionPane.
 	 */
-	public void showInputError(String message, String title) {
+	public void showMessageBox(String message, String title) {
 		JOptionPane.showMessageDialog(null, message, title, JOptionPane.INFORMATION_MESSAGE);
 	}
 

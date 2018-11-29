@@ -32,7 +32,7 @@ public class InputField extends JPanel {
         for (int i = 0; i < options.size(); i++) {
             super.add(new JLabel(options.get(i) + ": "));
             fields.add(new JTextField(10));
-            if (values.get(i) != 0.0 && values.get(i) != -1.0) {
+            if (values.get(i) != null && values.get(i) != 0.0) {
                 fields.get(i).setText(values.get(i).toString());
             }
             super.add(fields.get(i));
@@ -45,12 +45,12 @@ public class InputField extends JPanel {
         }
     }
 
-    public InputField(String title, String option, double value) {
+    public InputField(String title, String option, Double value) {
         super(new GridLayout(0, 2));
         JTextField field = new JTextField(10);
         data.clear();
         super.add(new JLabel(option + ": "));
-        if (value != 0.0 && value != -1.0) {
+        if (value != null && value != 0.0) {
             field.setText(String.valueOf(value));
         }
         super.add(field);

@@ -96,9 +96,6 @@ public class Controller implements ActionListener, MouseMotionListener, KeyListe
         if (e.getKeyCode() == KeyEvent.VK_C) {
             shapeManager.clearGui();
         }
-        if (e.getKeyCode() == KeyEvent.VK_S) {
-            shapeManager.solve();
-        }
     }
 
     @Override
@@ -119,6 +116,8 @@ public class Controller implements ActionListener, MouseMotionListener, KeyListe
         shapeManager.mouseY = e.getPoint().y;
         if (SwingUtilities.isRightMouseButton(e)) {
             shapeManager.moveShapes(prevX, prevY);
+        } else if (e.isShiftDown() && SwingUtilities.isLeftMouseButton(e)) {
+            shapeManager.rotateShape(e, prevX, prevY);
         } else if (SwingUtilities.isLeftMouseButton(e)) {
             shapeManager.resizeShape(e);
         }

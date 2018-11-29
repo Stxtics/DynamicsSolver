@@ -8,7 +8,7 @@ public class Rope {
     /**
      * Variables that a rope has.
      */
-	private double tension;
+	private Double tension;
 	private Entity object1;
 	private Entity object2;
 
@@ -17,15 +17,6 @@ public class Rope {
      */
 	public Rope() {
 
-	}
-
-    /**
-     * Constructor for a rope that sets data for it when it is made.
-     */
-	public Rope(double tension, Entity object1, Entity object2) {
-		this.tension = tension;
-		this.object1 = object1;
-		this.object2 = object2;
 	}
 
     /**
@@ -38,7 +29,7 @@ public class Rope {
     /**
      * Gets the tension of the Rope.
      */
-	public double getTension() {
+	public Double getTension() {
 		return this.tension;
 	}
 
