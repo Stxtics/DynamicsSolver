@@ -3,43 +3,17 @@ package project;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.List;
 
 public class SelectionField extends JPanel {
 
     public ArrayList<String> selections = new ArrayList<>();
 
-    public SelectionField(String title, Double time, Double distance, Double acceleration, Double iVelocity, Double fVelocity, Double coFriction) {
+    public SelectionField(String title, ArrayList<String> options) {
         super(new GridLayout(0, 2));
         selections.clear();
         ArrayList<Checkbox> checkboxes = new ArrayList<>();
-        if (time == null) {
-            Checkbox checkbox = new Checkbox("Time", null, false);
-            checkboxes.add(checkbox);
-            this.add(checkbox);
-        }
-        if (distance == null) {
-            Checkbox checkbox = new Checkbox("Distance", null, false);
-            checkboxes.add(checkbox);
-            this.add(checkbox);
-        }
-        if (acceleration == null) {
-            Checkbox checkbox = new Checkbox("Acceleration", null, false);
-            checkboxes.add(checkbox);
-            this.add(checkbox);
-        }
-        if (iVelocity == null) {
-            Checkbox checkbox = new Checkbox("Initial Velocity", null, false);
-            checkboxes.add(checkbox);
-            this.add(checkbox);
-        }
-        if (fVelocity == null) {
-            Checkbox checkbox = new Checkbox("Final Velocity", null, false);
-            checkboxes.add(checkbox);
-            this.add(checkbox);
-        }
-        if (coFriction == null) {
-            Checkbox checkbox = new Checkbox("μ", null, false);
+        for (String option : options) {
+            Checkbox checkbox = new Checkbox(option, null, false);
             checkboxes.add(checkbox);
             this.add(checkbox);
         }
@@ -62,6 +36,8 @@ public class SelectionField extends JPanel {
             if (checkbox.getState()) {
                 selections.add(checkbox.getLabel());
             }
+        } else if (result == JOptionPane.CANCEL_OPTION) {
+            selections.add("False");
         }
     }
 }

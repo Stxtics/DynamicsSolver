@@ -4,7 +4,6 @@ import java.awt.*;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
-import java.util.List;
 
 class Solver {
     ShapeManager shapeManager;
@@ -26,39 +25,55 @@ class Solver {
     double resolveHorizontal() {
         double totalForce = 0;
         for (Rope rope : shapeManager.ropes) {
-            if (rope.getObject1().getRightForce() != null) totalForce += rope.getObject1().getRightForce();
-            if (rope.getObject1().getLeftForce() != null) totalForce -= rope.getObject1().getLeftForce();
+            totalForce += rope.getObject1().getRightForce();
+            totalForce -= rope.getObject1().getLeftForce();
             if (shapeManager.ropes.indexOf(rope) == shapeManager.ropes.size() - 1) {
-                if (rope.getObject2().getRightForce() != null) totalForce += rope.getObject2().getRightForce();
-                if (rope.getObject2().getLeftForce() != null) totalForce -= rope.getObject2().getLeftForce();
+                totalForce += rope.getObject2().getRightForce();
+                totalForce -= rope.getObject2().getLeftForce();
             }
         }
         return totalForce;
     }
 
-    void solveHorizontally() {
+    private void solveHorizontally() {
         for (Rope rope : shapeManager.ropes) {
             if (rope.getTension() == null) {
                 if (shapeManager.hasFriction) {
-
+                    if (rope.getObject1().getRightForce() - rope.getObject1().getLeftForce() == 0) {
+                        rope.setTension(((rope.getObject1().getMass() * shapeManager.acceleration) + (shapeManager.coFriction * rope.getObject1().getMass() * shapeManager.gravity)));
+                    } else if (rope.getObject2().getRightForce() - rope.getObject2().getLeftForce() == 0) {
+                        rope.setTension(((rope.getObject2().getMass() * shapeManager.acceleration) + (shapeManager.coFriction * rope.getObject2().getMass() * shapeManager.gravity)));
+                    } else if (rope.getObject1().getRightForce() - rope.getObject1().getLeftForce() > 0) {
+                        rope.setTension(((rope.getObject1().getRightForce() - rope.getObject1().getLeftForce()) - (shapeManager.coFriction * rope.getObject1().getMass() * shapeManager.gravity) - (rope.getObject1().getMass() * shapeManager.acceleration)));
+                    } else if (rope.getObject2().getRightForce() - rope.getObject2().getLeftForce() > 0) {
+                        rope.setTension(((rope.getObject2().getRightForce() - rope.getObject2().getLeftForce()) - (shapeManager.coFriction * rope.getObject2().getMass() * shapeManager.gravity) - (rope.getObject2().getMass() * shapeManager.acceleration)));
+                    }
                 } else {
                     double magnitude = 0;
                     if (rope.getObject1().getRightForce() != null) magnitude += rope.getObject1().getRightForce();
                     if (rope.getObject1().getLeftForce() != null) magnitude -= rope.getObject1().getLeftForce();
-                    if (magnitude < 0) {
-                        rope.setTension((rope.getObject1().getMass() * shapeManager.acceleration) - magnitude);
+                    if (magnitude <= 0) {
+                        rope.setTension(((rope.getObject1().getMass() * shapeManager.acceleration) - magnitude));
                     } else {
-                        rope.setTension(magnitude - (rope.getObject1().getMass() * shapeManager.acceleration));
+                        rope.setTension((magnitude - (rope.getObject1().getMass() * shapeManager.acceleration)));
                     }
+                }
+            }
+        }
+        for (Entity entity : shapeManager.entities) {
+            if (entity.getMass() == 0 && shapeManager.acceleration != null) {
+                double totalForce = entity.getRightForce() - entity.getLeftForce();
+                if (totalForce != 0) {
+                    entity.setMass(totalForce / shapeManager.acceleration);
                 }
             }
         }
     }
 
-    double massSum() {
+    private double massSum() {
         double totalMass = 0;
         for (Entity object : shapeManager.entities) {
-            if (object.getMass() == null) {
+            if (object.getMass() == null || object.getMass() == 0) {
                 totalMass = -1;
                 break;
             }
@@ -68,10 +83,14 @@ class Solver {
     }
 
     void resolveVertical() {
+        for (Entity object : shapeManager.entities) {
+            if (object.getMass() != null && object.getMass() != 0) {
 
+            }
+        }
     }
 
-    void calculateSelections(List<String> selections) {
+    void calculateSelections(ArrayList<String> selections) {
         for (int i = 0; i < 5; i++) {
             if (selections.contains("Distance")) {
                 if (shapeManager.fVelocity != null && shapeManager.time != null && shapeManager.acceleration != null) {
@@ -135,6 +154,9 @@ class Solver {
                     shapeManager.acceleration = resolveHorizontal() / massSum();
                     selections.remove("Acceleration");
                 }
+                if (shapeManager.acceleration != null) {
+                    shapeManager.gui.showMessageBox("Acceleration = " + String.format("%." + shapeManager.precision + "f", shapeManager.acceleration) + "m/s/s", "Acceleration");
+                }
             }
             if (selections.contains("Time")) {
                 if (shapeManager.fVelocity != null && shapeManager.iVelocity != null && shapeManager.acceleration != null) {
@@ -156,13 +178,13 @@ class Solver {
                     shapeManager.coFriction = (resolveHorizontal() - (massSum() * shapeManager.acceleration)) / (massSum() * shapeManager.gravity);
                     selections.remove("μ");
                 }
+
             }
-        }
-        if (shapeManager.acceleration != null) {
-            shapeManager.gui.showMessageBox("Acceleration = " + shapeManager.acceleration + "m/s/s", "Acceleration");
         }
         if (shapeManager.coFriction != null) {
             shapeManager.gui.showMessageBox("μ = " + shapeManager.coFriction, "μ");
+            solveHorizontally();
+        } else if (!shapeManager.hasFriction) {
             solveHorizontally();
         }
     }

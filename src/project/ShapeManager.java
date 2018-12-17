@@ -10,7 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 
 class ShapeManager {
-    int mouseX, mouseY, direction = 0, index = -1;
+    int mouseX, mouseY, direction = 0, index = -1, precision = 3;
     Double gravity = 9.8, coFriction, time, distance, acceleration, iVelocity, fVelocity;
     boolean hasFriction = true;
     Shape resizedShape = null;
@@ -18,7 +18,7 @@ class ShapeManager {
     Gui gui;
     ArrayList<Rope> ropes = new ArrayList<>();
     ArrayList<Entity> entities = new ArrayList<>();
-    List<Integer> positions = new ArrayList<>();
+    ArrayList<Pulley> pulleys = new ArrayList<>();
 
     ShapeManager(Gui gui) {
         this.gui = gui;
@@ -31,12 +31,10 @@ class ShapeManager {
      * Then it repaints the graphics component and grabs focus of the jpContent JPanel.
      */
     void addRope() {
-        Rope rope = new Rope();
-        ropes.add(rope);
-        positions.add(ropes.size() - 1);
         Shape shape = new Line2D.Double(140, 140, 640, 140);
         content.shapes.add(shape);
         content.selectedShapes.add(shape);
+        ropes.add(new Rope(content.shapes.indexOf(shape)));
         content.repaint();
         content.grabFocus();
     }
@@ -46,12 +44,10 @@ class ShapeManager {
      * as the addRope procedure but instead of creating a Line2D it makes a Rectangle2D.
      */
     void addObject() {
-        Entity entity = new Entity();
-        entities.add(entity);
-        positions.add(entities.size() - 1);
         Shape shape = new Rectangle2D.Double(140, 140, 200, 200);
         content.shapes.add(shape);
         content.selectedShapes.add(shape);
+        entities.add(new Entity(content.shapes.indexOf(shape)));
         content.repaint();
         content.grabFocus();
     }
@@ -62,18 +58,17 @@ class ShapeManager {
      * two lines coming off of it.
      */
     void addPulley() {
-        Rope rope = new Rope();
-        ropes.add(rope);
-        positions.add(ropes.size() - 1);
-        Shape shape = new Ellipse2D.Double(140, 140, 200, 200);
-        content.shapes.add(shape);
-        content.selectedShapes.add(shape);
-        shape = new Line2D.Double(240, 140, 640, 140);
-        content.shapes.add(shape);
-        content.selectedShapes.add(shape);
-        shape = new Line2D.Double(240, 340, 640, 340);
-        content.shapes.add(shape);
-        content.selectedShapes.add(shape);
+        Ellipse2D circle = new Ellipse2D.Double(140, 140, 200, 200);
+        content.shapes.add(circle);
+        content.selectedShapes.add(circle);
+        Line2D tRope = new Line2D.Double(240, 140, 640, 140);
+        content.shapes.add(tRope);
+        content.selectedShapes.add(tRope);
+        ropes.add(new Rope(content.shapes.indexOf(circle)));
+        Line2D bRope = new Line2D.Double(240, 340, 640, 340);
+        content.shapes.add(bRope);
+        content.selectedShapes.add(bRope);
+        pulleys.add(new Pulley(circle, bRope, tRope));
         content.repaint();
         content.grabFocus();
     }
@@ -85,8 +80,11 @@ class ShapeManager {
     void clearGui() {
         ropes.clear();
         entities.clear();
+        pulleys.clear();
         content.shapes.clear();
         content.selectedShapes.clear();
+        gravity = 9.8;
+        coFriction = 0.0;
         content.repaint();
         content.grabFocus();
     }
@@ -209,7 +207,7 @@ class ShapeManager {
         Shape line = null;
         if ((right(shape, e) && direction == 0) || direction == 3) {
             direction = 3;
-            line = new Line2D.Double(shape.getBounds().x, shape.getBounds().y, mouseX, shape.getBounds().y);
+            line = new Line2D.Double(shape.getBounds().getMinX(), shape.getBounds().y, mouseX, shape.getBounds().y);
             content.setCursor(new Cursor(Cursor.E_RESIZE_CURSOR));
         } else if ((left(shape, e) && direction == 0) || direction == 7) {
             direction = 7;
@@ -219,10 +217,17 @@ class ShapeManager {
         }
         try {
             //Check to make sure it doesn't get too small.
-            if (line != null && line.getBounds().getWidth() < 20) {
+            if (line != null && (line.getBounds().getWidth() < 20 || (direction == 3 && shape.getBounds().getMinX() > mouseX) || (direction == 7 && shape.getBounds().getMaxX() < mouseX))) {
                 resizedShape = shape;
             } else if (line != null && direction != 0) {
                 index = i;
+                if (pulleys.stream().filter(x -> x.tRope == shape || x.bRope == shape).findFirst().orElse(null) != null) {
+                    if (pulleys.stream().filter(x -> x.tRope == shape).findFirst().orElse(null) != null) {
+                        pulleys.stream().filter(x -> x.tRope == shape).findFirst().orElse(null).tRope = (Line2D)line;
+                    } else if (pulleys.stream().filter(x -> x.bRope == shape).findFirst().orElse(null) != null) {
+                        pulleys.stream().filter(x -> x.bRope == shape).findFirst().orElse(null).bRope = (Line2D)line;
+                    }
+                }
                 resizedShape = line;
                 content.shapes.set(i, line);
                 int pos = content.selectedShapes.indexOf(shape);
@@ -288,12 +293,40 @@ class ShapeManager {
             } else if (circle != null && direction != 0) {
                 index = i;
                 resizedShape = circle;
-                content.shapes.set(i, circle);
-                int pos = content.selectedShapes.indexOf(shape);
-                if (pos != -1) {
-                    content.selectedShapes.set(pos, circle);
-                } else {
-                    content.selectedShapes.add(circle);
+                //content.shapes.set(i, circle);
+                //int pos = content.selectedShapes.indexOf(shape);
+                //if (pos != -1) {
+                  //  content.selectedShapes.set(pos, circle);
+                //} else {
+                  //  content.selectedShapes.add(circle);
+                //}
+                Pulley pulley = pulleys.stream().filter(x -> x.circle == shape).findFirst().orElse(null);
+                if (pulley != null) {
+                    Shape tRope = content.shapes.stream().filter(x -> x == pulley.tRope).findFirst().orElse(null);
+                    Shape bRope = content.shapes.stream().filter(x -> x == pulley.bRope).findFirst().orElse(null);
+                    if (tRope != null && bRope != null) {
+                        int bRopeIndex = content.shapes.indexOf(bRope), tRopeIndex = content.shapes.indexOf(tRope);
+                        tRope = new Line2D.Double(circle.getBounds().getMaxX() - (circle.getBounds().getWidth() / 2), circle.getBounds().getMinY(), (circle.getBounds().getMaxX() - (circle.getBounds().getWidth() / 2)) + tRope.getBounds().getWidth(), circle.getBounds().getMinY());
+                        bRope = new Line2D.Double(circle.getBounds().getMaxX() - (circle.getBounds().getWidth() / 2), circle.getBounds().getMaxY(), (circle.getBounds().getMaxX() - (circle.getBounds().getWidth() / 2)) + bRope.getBounds().getWidth(), circle.getBounds().getMaxY());
+                        content.shapes.set(i, circle);
+                        int pos = content.selectedShapes.indexOf(shape);
+                        if (pos != -1) {
+                            content.selectedShapes.set(pos, circle);
+                        } else {
+                            content.selectedShapes.add(circle);
+                        }
+                        content.selectedShapes.set(tRopeIndex, tRope);
+                        pos = content.shapes.indexOf(pulley.tRope);
+                        if (pos != -1) {
+                            content.shapes.set(pos, tRope);
+                        }
+                        content.selectedShapes.set(bRopeIndex, bRope);
+                        pos = content.shapes.indexOf(pulley.bRope);
+                        if (pos != -1) {
+                            content.shapes.set(pos, bRope);
+                        }
+                        pulleys.set(pulleys.indexOf(pulley), new Pulley((Ellipse2D) circle, (Line2D) bRope, (Line2D) tRope));
+                    }
                 }
             }
         } catch (NullPointerException e1) {
@@ -307,33 +340,68 @@ class ShapeManager {
             if (shape.getClass() == Line2D.Double.class) { // line2d
                 if (!(shape.getBounds().x + mouseX - prevX < 0 || shape.getBounds().getMaxX() + mouseX - prevX > content.getWidth() // don't let line go off screen
                         || shape.getBounds().y + mouseY - prevY < 0 || shape.getBounds().getMaxY() + mouseY - prevY > content.getHeight())) {
-                    Shape line = new Line2D.Double(shape.getBounds().x + mouseX - prevX,
-                            shape.getBounds().y + mouseY - prevY, shape.getBounds().x + mouseX - prevX + shape.getBounds().getWidth(),
-                            shape.getBounds().y + mouseY - prevY);
-                    content.selectedShapes.set(i, line);
-                    int pos = content.shapes.indexOf(shape);
-                    content.shapes.set(pos, line);
+                    if (pulleys.stream().filter(x -> x.tRope == shape || x.bRope == shape).findFirst().orElse(null) == null) {
+                        moveLine(shape, prevX, prevY, i);
+                    }
                 }
             } else if (shape.getClass() == Rectangle2D.Double.class) { // if shape is a rectangle2d
                 if (!(shape.getBounds().x + mouseX - prevX < 0 || shape.getBounds().getMaxX() + mouseX - prevX > content.getWidth() // don't let rectangle go off screen
                         || shape.getBounds().y + mouseY - prevY < 0 || shape.getBounds().getMaxY() + mouseY - prevY > content.getHeight())) {
-                    Shape rectangle = new Rectangle2D.Double(shape.getBounds().x + mouseX - prevX,
-                            shape.getBounds().y + mouseY - prevY, shape.getBounds().getWidth(),
-                            shape.getBounds().getHeight());
-                    content.selectedShapes.set(i, rectangle);
-                    int pos = content.shapes.indexOf(shape);
-                    content.shapes.set(pos, rectangle);
+                    moveRectangle(shape, prevX, prevY, i);
                 }
             } else if (shape.getClass() == Ellipse2D.Double.class) {
                 if (!(shape.getBounds().x + mouseX - prevX < 0 || shape.getBounds().getMaxX() + mouseX - prevX > content.getWidth() // don't let circle go off screen
                         || shape.getBounds().y + mouseY - prevY < 0 || shape.getBounds().getMaxY() + mouseY - prevY > content.getHeight())) {
-                    Shape circle = new Ellipse2D.Double(shape.getBounds().x + mouseX - prevX,
-                            shape.getBounds().y + mouseY - prevY, shape.getBounds().getWidth(),
-                            shape.getBounds().getHeight());
-                    content.selectedShapes.set(i, circle);
-                    int pos = content.shapes.indexOf(shape);
-                    content.shapes.set(pos, circle);
+                    moveCircle(shape, prevX, prevY, i);
                 }
+            }
+        }
+    }
+
+    private void moveLine(Shape shape, int prevX, int prevY, int i) {
+        Shape line = new Line2D.Double(shape.getBounds().x + mouseX - prevX,
+                shape.getBounds().y + mouseY - prevY, shape.getBounds().x + mouseX - prevX + shape.getBounds().getWidth(),
+                shape.getBounds().y + mouseY - prevY);
+        content.selectedShapes.set(i, line);
+        int pos = content.shapes.indexOf(shape);
+        content.shapes.set(pos, line);
+    }
+
+    private void moveRectangle(Shape shape, int prevX, int prevY, int i) {
+        Shape rectangle = new Rectangle2D.Double(shape.getBounds().x + mouseX - prevX,
+                shape.getBounds().y + mouseY - prevY, shape.getBounds().getWidth(),
+                shape.getBounds().getHeight());
+        content.selectedShapes.set(i, rectangle);
+        int pos = content.shapes.indexOf(shape);
+        content.shapes.set(pos, rectangle);
+    }
+
+    private void moveCircle(Shape shape, int prevX, int prevY, int i) {
+        Shape circle = new Ellipse2D.Double(shape.getBounds().x + mouseX - prevX,
+                shape.getBounds().y + mouseY - prevY, shape.getBounds().getWidth(),
+                shape.getBounds().getHeight());
+        Pulley pulley = pulleys.stream().filter(x -> x.circle == shape).findFirst().orElse(null);
+        if (pulley != null) {
+            Shape tRope = content.selectedShapes.stream().filter(x -> x == pulley.tRope).findFirst().orElse(null);
+            Shape bRope = content.selectedShapes.stream().filter(x -> x == pulley.bRope).findFirst().orElse(null);
+            if (tRope != null && bRope != null) {
+                int bRopeIndex = content.selectedShapes.indexOf(bRope), tRopeIndex = content.selectedShapes.indexOf(tRope);
+                tRope = new Line2D.Double(circle.getBounds().getMaxX() - (circle.getBounds().getWidth() / 2), circle.getBounds().getMinY(), (circle.getBounds().getMaxX() - (circle.getBounds().getWidth() / 2)) + tRope.getBounds().getWidth(), circle.getBounds().getMinY());
+                bRope = new Line2D.Double(circle.getBounds().getMaxX() - (circle.getBounds().getWidth() / 2), circle.getBounds().getMaxY(), (circle.getBounds().getMaxX() - (circle.getBounds().getWidth() / 2)) + bRope.getBounds().getWidth(), circle.getBounds().getMaxY());
+                content.selectedShapes.set(i, circle);
+                int pos = content.shapes.indexOf(shape);
+                content.shapes.set(pos, circle);
+                content.selectedShapes.set(tRopeIndex, tRope);
+                pos = content.shapes.indexOf(pulley.tRope);
+                if (pos != -1) {
+                    content.shapes.set(pos, tRope);
+                }
+                content.selectedShapes.set(bRopeIndex, bRope);
+                pos = content.shapes.indexOf(pulley.bRope);
+                if (pos != -1) {
+                    content.shapes.set(pos, bRope);
+                }
+                pulleys.set(pulleys.indexOf(pulley), new Pulley((Ellipse2D) circle, (Line2D) bRope, (Line2D) tRope));
             }
         }
     }
@@ -363,7 +431,9 @@ class ShapeManager {
         } else {
             for (int i = 0; i < content.shapes.size(); i++) {
                 if (content.shapes.get(i).getClass() == Line2D.Double.class) { // if shape is line2d
-                    resizeLine(content.shapes.get(i), e, i);
+                    if (isCloseTo(content.shapes.get(i), e)) {
+                        resizeLine(content.shapes.get(i), e, i);
+                    }
                 } else if (content.shapes.get(i).getClass() == Rectangle2D.Double.class) { // if shape is a rectangle2d
                     if (isCloseTo(content.shapes.get(i), e)) {
                         resizeRectangle(content.shapes.get(i), e, i);
@@ -401,7 +471,8 @@ class ShapeManager {
      */
     private void enterRopeDetails(int i) {
         String data = "Tension";
-        Double value = ropes.get(positions.get(i)).getTension();
+        Rope rope = ropes.stream().filter(x -> x.getShapeIndex() == i).findFirst().orElse(null);
+        Double value = rope.getTension();
         try {
             List<String> arr = new InputField("Rope Details - Leave blank if unknown", data, value).data;
             if (arr.size() > 0) {
@@ -409,10 +480,12 @@ class ShapeManager {
                 if (tensionS.length() > 0) {
                     double tension = Double.parseDouble(tensionS);
                     if (tension > 0) {
-                        ropes.get(positions.get(i)).setTension(tension);
+                        rope.setTension(tension);
                     } else {
                         gui.showMessageBox("Tension must be greater than 0.", "Error");
                     }
+                } else {
+                    rope.setTension(0);
                 }
             }
         } catch (NumberFormatException error) {
@@ -427,102 +500,106 @@ class ShapeManager {
      * are it sets those values on the entity.
      */
     private void enterObjectDetails(int i) {
-        List<String> data = Arrays.asList("Weight", "Down force", "Up force", "Left force", "Right force");
-        List<Double> values = Arrays.asList(entities.get(positions.get(i)).getMass(), entities.get(positions.get(i)).getDownForce(), entities.get(positions.get(i)).getUpForce(), entities.get(positions.get(i)).getLeftForce(), entities.get(positions.get(i)).getRightForce());
+        ArrayList<String> data = new ArrayList<>(Arrays.asList("Mass", "Weight", "Resultant force", "Left force", "Right force"));
+        Entity entity = entities.stream().filter(x -> x.getShapeIndex() == i).findFirst().orElse(null);
+        ArrayList<Double> values = new ArrayList<>(Arrays.asList(entity.getMass(), entity.getWeight(), entity.getResultantForce(), entity.getLeftForce(), entity.getRightForce()));
         data = new InputField("Object Details - Leave blank if unknown", data, values).data;
         for (int j = 0; j < data.size(); j++) {
             if (data.get(j).length() > 0 && j == 0) {
                 try {
                     double mass = Double.parseDouble(data.get(j));
                     if (mass > 0) {
-                        entities.get(positions.get(i)).setMass(mass);
+                        entity.setMass(mass);
                     } else {
-                        gui.showMessageBox("Weight must be greater than 0.", "Error");
+                        gui.showMessageBox("Mass must be greater than 0.", "Error");
                     }
+                } catch (NumberFormatException error) {
+                    gui.showMessageBox("Mass must be a double.", "Error");
+                }
+            }  else if (j == 0) {
+                entity.setMass(0);
+            } else if (data.get(j).length() > 0 && j == 1) {
+                try {
+                    double weight = Double.parseDouble(data.get(j));
+                    entity.setWeight(weight);
                 } catch (NumberFormatException error) {
                     gui.showMessageBox("Weight must be a double.", "Error");
                 }
-            }  else if (data.get(j).length() > 0 && j == 1) {
-                try {
-                    double downForce = Double.parseDouble(data.get(j));
-                    entities.get(positions.get(i)).setDownForce(downForce);
-                } catch (NumberFormatException error) {
-                    gui.showMessageBox("Down force must be a double.", "Error");
-                }
+            } else if (j == 1) {
+                entity.setWeight(0);
             } else if (data.get(j).length() > 0 && j == 2) {
                 try {
-                    double upForce = Double.parseDouble(data.get(j));
-                    entities.get(positions.get(i)).setUpForce(upForce);
+                    double resultantForce = Double.parseDouble(data.get(j));
+                    entity.setResultantForce(resultantForce);
                 } catch (NumberFormatException error) {
-                    gui.showMessageBox("Up force must be a double.", "Error");
+                    gui.showMessageBox("Resultant force must be a double.", "Error");
                 }
+            } else if (j == 2) {
+                entity.setResultantForce(0);
             } else if (data.get(j).length() > 0 && j == 3) {
                 try {
                     double leftForce = Double.parseDouble(data.get(j));
-                    entities.get(positions.get(i)).setLeftForce(leftForce);
+                    entity.setLeftForce(leftForce);
                 } catch (NumberFormatException error) {
                     gui.showMessageBox("Left force must be a double.", "Error");
                 }
+            } else if (j == 3) {
+                entity.setLeftForce(0);
             } else if (data.get(j).length() > 0 && j == 4) {
                 try {
                     double rightForce = Double.parseDouble(data.get(j));
-                    entities.get(positions.get(i)).setRightForce(rightForce);
+                    entity.setRightForce(rightForce);
                 } catch (NumberFormatException error) {
                     gui.showMessageBox("Right force must be a double.", "Error");
                 }
+            } else if (j == 4) {
+               entity.setRightForce(0);
             }
         }
     }
 
     Shape selectShape(MouseEvent e) {
-        Shape addedShape;
         for (int i = content.shapes.size() - 1; i >= 0; i--) {
-            if (content.shapes.get(i).getClass() == Line2D.Double.class) {// if shape is line2d
-                if (isCloseTo(content.shapes.get(i), e)) {
-                    if (!content.selectedShapes.contains(content.shapes.get(i))) {
+            Shape shape = content.shapes.get(i);
+            if (shape.getClass() == Line2D.Double.class) {// if shape is line2d
+                if (isCloseTo(shape, e)) {
+                    if (!content.selectedShapes.contains(shape)) {
+                        if (pulleys.stream().filter(x -> x.bRope == shape || x.tRope == shape).findFirst().orElse(null) == null) {
+                            if (e.isControlDown()) {
+                                enterRopeDetails(i);
+                                return shape;
+                            } else {
+                                content.selectedShapes.add(shape);
+                                content.repaint();
+                                return shape;
+                            }
+                        }
+                    }
+                }
+            } else if (shape.getClass() == Rectangle2D.Double.class) {// if shape is rectangle2d
+                if (shape.contains(e.getPoint())) {
+                    if (!content.selectedShapes.contains(shape)) {
+                        if (e.isControlDown()) {
+                            enterObjectDetails(i);
+                            return shape;
+                        } else {
+                            content.selectedShapes.add(shape);
+                            content.repaint();
+                            return shape;
+                        }
+                    }
+                }
+            } else if (shape.getClass() == Ellipse2D.Double.class) {
+                if (shape.contains(e.getPoint())) {
+                    if (!content.selectedShapes.contains(shape)) {
                         if (e.isControlDown()) {
                             enterRopeDetails(i);
+                            return shape;
                         } else {
-                            content.selectedShapes.add(content.shapes.get(i));
-                            addedShape = content.shapes.get(i);
+                            content.selectedShapes.add(shape);
                             content.repaint();
-                            if (addedShape != null) {
-                                return addedShape;
-                            }
+                            return shape;
                         }
-                        break;
-                    }
-                }
-            } else if (content.shapes.get(i).getClass() == Rectangle2D.Double.class) {// if shape is rectangle2d
-                if (content.shapes.get(i).contains(e.getPoint())) {
-                    if (!content.selectedShapes.contains(content.shapes.get(i))) {
-                        if (e.isControlDown()) {
-                            enterObjectDetails(i);
-                        } else {
-                            content.selectedShapes.add(content.shapes.get(i));
-                            addedShape = content.shapes.get(i);
-                            content.repaint();
-                            if (addedShape != null) {
-                                return addedShape;
-                            }
-                        }
-                        break;
-                    }
-                }
-            } else if (content.shapes.get(i).getClass() == Ellipse2D.Double.class) {
-                if (content.shapes.get(i).contains(e.getPoint())) {
-                    if (!content.selectedShapes.contains(content.shapes.get(i))) {
-                        if (e.isControlDown()) {
-                            enterObjectDetails(i);
-                        } else {
-                            content.selectedShapes.add(content.shapes.get(i));
-                            addedShape = content.shapes.get(i);
-                            content.repaint();
-                            if (addedShape != null) {
-                                return addedShape;
-                            }
-                        }
-                        break;
                     }
                 }
             }
@@ -533,42 +610,45 @@ class ShapeManager {
     void deselectShape(MouseEvent e) {
         for (int i = 0; i < content.selectedShapes.size(); i++) {
             for (int j = content.shapes.size() - 1; j >= 0; j--) {
-                if (content.shapes.get(j).getClass() == Line2D.Double.class) {// if shape is line2d
-                    if (isCloseTo(content.shapes.get(j), e)) {
-                        if (e.isControlDown()) {
-                            enterRopeDetails(j);
-                            i = content.selectedShapes.size();
-                        } else {
-                            if (content.selectedShapes.get(i) == content.shapes.get(j)) {
-                                content.selectedShapes.remove(content.shapes.get(j));
+                Shape shape = content.shapes.get(j);
+                if (shape.getClass() == Line2D.Double.class) {// if shape is line2d
+                    if (isCloseTo(shape, e)) {
+                        if (pulleys.stream().filter(x -> x.bRope == shape || x.tRope == shape).findFirst().orElse(null) == null) {
+                            if (e.isControlDown()) {
+                                enterRopeDetails(j);
                                 i = content.selectedShapes.size();
+                            } else {
+                                if (content.selectedShapes.get(i) == shape) {
+                                    content.selectedShapes.remove(shape);
+                                    i = content.selectedShapes.size();
+                                }
+                                content.repaint();
                             }
-                            content.repaint();
                         }
                         break;
                     }
-                } else if (content.shapes.get(j).getClass() == Rectangle2D.Double.class) { // if shape is rectangle2d
-                    if (content.shapes.get(j).contains(e.getPoint())) {
+                } else if (shape.getClass() == Rectangle2D.Double.class) { // if shape is rectangle2d
+                    if (shape.contains(e.getPoint())) {
                         if (e.isControlDown()) {
                             enterObjectDetails(j);
                             i = content.selectedShapes.size();
                         } else {
-                            if (content.selectedShapes.get(i) == content.shapes.get(j)) {
-                                content.selectedShapes.remove(content.shapes.get(j));
+                            if (content.selectedShapes.get(i) == shape) {
+                                content.selectedShapes.remove(shape);
                                 i = content.selectedShapes.size();
                             }
                             content.repaint();
                         }
                         break;
                     }
-                } else if (content.shapes.get(j).getClass() == Ellipse2D.Double.class) {
-                    if (content.shapes.get(j).contains(e.getPoint())) {
+                } else if (shape.getClass() == Ellipse2D.Double.class) {
+                    if (shape.contains(e.getPoint())) {
                         if (e.isControlDown()) {
                             enterRopeDetails(j);
                             i = content.selectedShapes.size();
                         } else {
-                            if (content.selectedShapes.get(i) == content.shapes.get(j)) {
-                                content.selectedShapes.remove(content.shapes.get(j));
+                            if (content.selectedShapes.get(i) == shape) {
+                                content.selectedShapes.remove(shape);
                                 i = content.selectedShapes.size();
                             }
                             content.repaint();
@@ -594,40 +674,81 @@ class ShapeManager {
      * of the Solve class and work on solving the problem.
      */
     void solve() {
-        hasFriction = (new SelectionField("Does this system have friction?").selections.size() > 0);
-        if (showSettingsPanel()) {
-            final Solver solver = new Solver(this);
-            solver.LinkRopesToEntities(ropes, entities);
-            if (solver.allRopesConnected(ropes)) {
-                ArrayList<String> selections;
-                if (hasFriction) {
-                    selections = new SelectionField("What do you want to find?", time, distance, acceleration, iVelocity, fVelocity, coFriction).selections;
-                } else {
-                    selections = new SelectionField("What do you want to find?", time, distance, acceleration, iVelocity, fVelocity, 5.0).selections;
-                }
-                if (selections.size() > 0) {
-                    solver.calculateSelections(selections);
-                } else {
+        ArrayList<String> arr = new SelectionField("Does this system have friction?").selections;
+        if (!arr.contains("False")) {
+            hasFriction = (!arr.contains("False") && arr.size() > 0);
+            if (showSettingsPanel()) {
+                final Solver solver = new Solver(this);
+                solver.LinkRopesToEntities(ropes, entities);
+                if (solver.allRopesConnected(ropes)) {
+                    ArrayList<String> selections = new ArrayList<>();
+                    if (time == null)
+                    {
+                        selections.add("Time");
+                    }
+                    if (distance == null)
+                    {
+                        selections.add("Distance");
+                    }
+                    if (acceleration == null)
+                    {
+                        selections.add("Acceleration");
+                    }
+                    if (iVelocity == null)
+                    {
+                        selections.add("Initial Velocity");
+                    }
+                    if (fVelocity == null)
+                    {
+                        selections.add("Final Velocity");
+                    }
+                    if (coFriction == null && hasFriction)
+                    {
+                        selections.add("μ");
+                    }
+                    selections = new SelectionField("What do you want to find?", selections).selections;
+                    List<String> accuracy = new InputField("Object Details - Leave blank if unknown", "Decimal Places", (double)precision).data;
+                    if (accuracy.size() > 0) {
+                        if (accuracy.get(0).length() > 0) {
+                            try {
+                                if (Integer.parseInt(accuracy.get(0)) >= 0) {
+                                    precision = Integer.parseInt(accuracy.get(0));
+                                } else {
+                                    gui.showMessageBox("Decimal places must not be negative.", "Error");
+                                    return;
+                                }
+                            } catch (NumberFormatException error) {
+                                gui.showMessageBox("Decimal places must be a whole number.", "Error");
+                                return;
+                            }
+                        }
+                        if (selections.size() > 0) {
+                            solver.calculateSelections(selections);
+                        } else {
 
+                        }
+                    }
+                } else {
+                    gui.showMessageBox("Not all Ropes have been connected to an Object.", "Error");
                 }
-            } else {
-                gui.showMessageBox("Not all Ropes have been connected to an Object.", "Error");
             }
         }
     }
 
-    boolean showSettingsPanel() {
-        List<String> data = Arrays.asList("Gravity", "Time (s)", "Distance (m)", "Acceleration (m/s/s)", "Initial Velocity (m/s)", "Final Velocity (m/s)");
-        List<Double> values = Arrays.asList(gravity, time, distance, acceleration, iVelocity, fVelocity);
+    private boolean showSettingsPanel() {
+        ArrayList<String> data = new ArrayList<>(Arrays.asList("Gravity", "Time (s)", "Distance (m)", "Acceleration (m/s/s)", "Initial Velocity (m/s)", "Final Velocity (m/s)"));
+        ArrayList<Double> values = new ArrayList<>(Arrays.asList(gravity, time, distance, acceleration, iVelocity, fVelocity));
         if (hasFriction) {
-            data = Arrays.asList("Gravity", "Time (s)", "Distance (m)", "Acceleration (m/s/s)", "Initial Velocity (m/s)", "Final Velocity (m/s)", "μ");
-            values = Arrays.asList(gravity, time, distance, acceleration, iVelocity, fVelocity, coFriction);
+            data.add("μ");
+            values.add(coFriction);
         }
         data = new InputField("Settings", data, values).data;
+        boolean success = false;
         for (int i = 0; i < data.size(); i++) {
             if (data.get(i).length() > 0 && i == 0) {
                 try {
                     gravity = Double.parseDouble(data.get(i));
+                    success = true;
                 } catch (NumberFormatException error) {
                     gui.showMessageBox("Gravity must be a double.", "Error");
                     return false;
@@ -636,6 +757,7 @@ class ShapeManager {
                 try {
                     if (Double.parseDouble(data.get(i)) > 0) {
                         time = Double.parseDouble(data.get(i));
+                        success = true;
                     } else {
                         gui.showMessageBox("Time must be greater than 0.", "Error");
                     }
@@ -646,6 +768,7 @@ class ShapeManager {
             } else if (data.get(i).length() > 0 && i == 2) {
                 try {
                     distance = Double.parseDouble(data.get(i));
+                    success = true;
                 } catch (NumberFormatException error) {
                     gui.showMessageBox("Distance must be a double.", "Error");
                     return false;
@@ -653,6 +776,7 @@ class ShapeManager {
             } else if (data.get(i).length() > 0 && i == 3) {
                 try {
                     acceleration = Double.parseDouble(data.get(i));
+                    success = true;
                 } catch (NumberFormatException error) {
                     gui.showMessageBox("Acceleration must be a double.", "Error");
                     return false;
@@ -660,6 +784,7 @@ class ShapeManager {
             } else if (data.get(i).length() > 0 && i == 4) {
                 try {
                     iVelocity = Double.parseDouble(data.get(i));
+                    success = true;
                 } catch (NumberFormatException error) {
                     gui.showMessageBox("Initial velocity must be a double.", "Error");
                     return false;
@@ -667,6 +792,7 @@ class ShapeManager {
             } else if (data.get(i).length() > 0 && i == 5) {
                 try {
                     fVelocity = Double.parseDouble(data.get(i));
+                    success = true;
                 } catch (NumberFormatException error) {
                     gui.showMessageBox("Final velocity must be a double.", "Error");
                     return false;
@@ -674,12 +800,13 @@ class ShapeManager {
             } else if (data.get(i).length() > 0 && i == 6) {
                 try {
                     coFriction = Double.parseDouble(data.get(i));
+                    success = true;
                 } catch (NumberFormatException error) {
                     gui.showMessageBox("μ must be a double.", "Error");
                     return false;
                 }
             }
         }
-        return true;
+        return success;
     }
 }

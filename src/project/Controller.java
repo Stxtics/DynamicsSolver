@@ -72,7 +72,7 @@ public class Controller implements ActionListener, MouseMotionListener, KeyListe
 
     @Override
     public void keyPressed(KeyEvent e) {
-        // TODO Auto-generated method stub
+
     }
 
     /**
@@ -100,7 +100,6 @@ public class Controller implements ActionListener, MouseMotionListener, KeyListe
 
     @Override
     public void keyTyped(KeyEvent e) {
-        // TODO Auto-generated method stub
 
     }
 
@@ -138,19 +137,16 @@ public class Controller implements ActionListener, MouseMotionListener, KeyListe
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        // TODO Auto-generated method stub
 
     }
 
     @Override
     public void mouseEntered(MouseEvent arg0) {
-        // TODO Auto-generated method stub
 
     }
 
     @Override
     public void mouseExited(MouseEvent arg0) {
-        // TODO Auto-generated method stub
 
     }
 

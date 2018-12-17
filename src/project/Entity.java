@@ -9,16 +9,17 @@ public class Entity {
      * Variables of values that the entity can have.
      */
 	private Double mass;
-	private Double downForce;
-	private Double upForce;
+	private Double weight;
+	private Double resultantForce;
 	private Double rightForce;
 	private Double leftForce;
+	private int shapeIndex;
 
     /**
      * Default constructor for the entity.
      */
-	public Entity() {
-
+	public Entity(int shapeIndex) {
+        this.shapeIndex = shapeIndex;
 	}
 
     /**
@@ -38,29 +39,35 @@ public class Entity {
     /**
      * Sets the down force of the Entity.
      */
-	public void setDownForce(double downForce) {
-		this.downForce = downForce;
+	public void setWeight(double weight) {
+		this.weight = weight;
 	}
 
     /**
      * Gets the down force of the Entity.
      */
-	public Double getDownForce() {
-		return this.downForce;
+	public Double getWeight() {
+		if (this.weight == null) {
+			return 0.0;
+		}
+		return this.weight;
 	}
 
     /**
      * Sets the up force of the Entity.
      */
-	public void setUpForce(double upForce) {
-		this.upForce = upForce;
+	public void setResultantForce(double resultantForce) {
+		this.resultantForce = resultantForce;
 	}
 
     /**
      * Gets the up force of the Entity.
      */
-	public Double getUpForce() {
-		return this.upForce;
+	public Double getResultantForce() {
+        if (this.resultantForce == null) {
+            return 0.0;
+        }
+		return this.resultantForce;
 	}
 
     /**
@@ -74,6 +81,9 @@ public class Entity {
      * Gets the right force of the Entity.
      */
 	public Double getRightForce() {
+        if (this.rightForce == null) {
+            return 0.0;
+        }
 		return this.rightForce;
 	}
 
@@ -88,7 +98,11 @@ public class Entity {
      * Gets the left force of the Entity.
      */
 	public Double getLeftForce() {
+        if (this.leftForce == null) {
+            return 0.0;
+        }
 		return this.leftForce;
 	}
-	
+
+    public int getShapeIndex() { return this.shapeIndex; }
 }

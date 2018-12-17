@@ -18,14 +18,14 @@ import java.util.List;
 @SuppressWarnings("serial")
 public class InputField extends JPanel {
     // data is used to store the data that the user enters into the input field
-    public List<String> data = new ArrayList<>();
+    public ArrayList<String> data = new ArrayList<>();
 
     /**
      * Creates a new InputField with the specified parameters to make it work.
      * It uses a JOptionPane with JTextFields to allow the user to enter data.
      */
 
-    public InputField(String title, List<String> options, List<Double> values) {
+    public InputField(String title, ArrayList<String> options, ArrayList<Double> values) {
         super(new GridLayout(0, 2));
         List<JTextField> fields = new ArrayList<>();
         data.clear();

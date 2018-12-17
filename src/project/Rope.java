@@ -11,12 +11,13 @@ public class Rope {
 	private Double tension;
 	private Entity object1;
 	private Entity object2;
+	private int shapeIndex;
 
     /**
      * Default constructor for a rope.
      */
-	public Rope() {
-
+	public Rope(int shapeIndex) {
+	    this.shapeIndex = shapeIndex;
 	}
 
     /**
@@ -60,4 +61,6 @@ public class Rope {
 	public Entity getObject2() {
 		return this.object2;
 	}
+
+	public int getShapeIndex() { return this.shapeIndex; }
 }
