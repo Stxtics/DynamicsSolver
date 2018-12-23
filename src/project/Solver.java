@@ -3,6 +3,7 @@ package project;
 import java.awt.*;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
 
 class Solver {
@@ -198,7 +199,7 @@ class Solver {
         return true;
     }
 
-    void LinkRopesToEntities(ArrayList<Rope> ropes, ArrayList<Entity> entities) {
+    void LinkRopesToEntities(ArrayList<Rope> ropes, ArrayList<Entity> entities, ArrayList<Pulley> pulleys) {
         ArrayList<Shape> lines = new ArrayList<>();
         ArrayList<Shape> rectangles = new ArrayList<>();
         for (Shape shape : shapeManager.content.shapes) {
@@ -211,13 +212,44 @@ class Solver {
 
         for (Shape rope : lines) {
             for (Shape entity : rectangles) {
-                Point ropeL = new Point(((int) rope.getBounds2D().getMinX() - 5), ((int) rope.getBounds2D().getY()));
-                Point ropeR = new Point(((int) rope.getBounds2D().getMaxX() - 5), ((int) rope.getBounds2D().getY()));
-                if (entity.contains(ropeL)) {
-                    ropes.get(lines.indexOf(rope)).setObject1(entities.get(rectangles.indexOf(entity)));
-                }
-                if (entity.contains(ropeR)) {
-                    ropes.get(lines.indexOf(rope)).setObject2(entities.get(rectangles.indexOf(entity)));
+                if (pulleys.stream().filter(x -> x.bRope == rope || x.tRope == rope).findFirst().orElse(null) == null) {
+                    Point ropeL = new Point(((int) rope.getBounds2D().getMinX() - 5), ((int) rope.getBounds2D().getY()));
+                    Point ropeR = new Point(((int) rope.getBounds2D().getMaxX() - 5), ((int) rope.getBounds2D().getY()));
+                    if (entity.contains(ropeL)) {
+                        Rope currentRope = ropes.stream().filter(x -> x.getShapeIndex() == shapeManager.content.shapes.indexOf(rope)).findFirst().orElse(null);
+                        Entity currentEntity = entities.stream().filter(x -> x.getShapeIndex() == shapeManager.content.shapes.indexOf(entity)).findFirst().orElse(null);
+                        if (currentRope != null && currentEntity != null) {
+                            currentRope.setObject1(currentEntity);
+                        }
+                    }
+                    if (entity.contains(ropeR)) {
+                        Rope currentRope = ropes.stream().filter(x -> x.getShapeIndex() == shapeManager.content.shapes.indexOf(rope)).findFirst().orElse(null);
+                        Entity currentEntity = entities.stream().filter(x -> x.getShapeIndex() == shapeManager.content.shapes.indexOf(entity)).findFirst().orElse(null);
+                        if (currentRope != null && currentEntity != null) {
+                            currentRope.setObject2(currentEntity);
+                        }
+                    }
+                } else {
+                    Pulley pulley = pulleys.stream().filter(x -> x.bRope == rope || x.tRope == rope).findFirst().orElse(null);
+                    if (pulleys.stream().filter(x -> x.bRope == rope).findFirst().orElse(null) != null) {
+                        Point ropeEnd = new Point ((int)rope.getBounds().getMaxX(), (int)rope.getBounds().getY());
+                        if (entity.contains(ropeEnd)) {
+                            Rope currentRope = ropes.stream().filter(x -> x.getShapeIndex() == shapeManager.content.shapes.indexOf(pulley.circle)).findFirst().orElse(null);
+                            Entity currentEntity = entities.stream().filter(x -> x.getShapeIndex() == shapeManager.content.shapes.indexOf(entity)).findFirst().orElse(null);
+                            if (currentRope != null && currentEntity != null) {
+                                currentRope.setObject1(currentEntity);
+                            }
+                        }
+                    } else if (pulleys.stream().filter(x -> x.tRope == rope).findFirst().orElse(null) != null) {
+                        Point ropeEnd = new Point ((int)rope.getBounds().getMaxX(), (int)rope.getBounds().getY());
+                        if (entity.contains(ropeEnd)) {
+                            Rope currentRope = ropes.stream().filter(x -> x.getShapeIndex() == shapeManager.content.shapes.indexOf(pulley.circle)).findFirst().orElse(null);
+                            Entity currentEntity = entities.stream().filter(x -> x.getShapeIndex() == shapeManager.content.shapes.indexOf(entity)).findFirst().orElse(null);
+                            if (currentRope != null && currentEntity != null) {
+                                currentRope.setObject2(currentEntity);
+                            }
+                        }
+                    }
                 }
             }
         }

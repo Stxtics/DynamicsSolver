@@ -181,7 +181,8 @@ class ShapeManager {
         }
         try {
             // Check to make sure the rectangle does not get too small.
-            if (rectangle != null && (rectangle.getBounds().getWidth() < 20 || rectangle.getBounds().getHeight() < 20)) {
+            if (rectangle != null && (rectangle.getBounds().getWidth() < 20 || rectangle.getBounds().getHeight() < 20 || rectangle.getBounds().getMinX() < 0 || rectangle.getBounds().getMaxX() > content.getWidth()
+                    || rectangle.getBounds().getMinY() < 0 || rectangle.getBounds().getMaxY() > content.getHeight())) {
                 resizedShape = shape;
             } else if (rectangle != null && direction != 0) {
                 index = i;
@@ -217,17 +218,11 @@ class ShapeManager {
         }
         try {
             //Check to make sure it doesn't get too small.
-            if (line != null && (line.getBounds().getWidth() < 20 || (direction == 3 && shape.getBounds().getMinX() > mouseX) || (direction == 7 && shape.getBounds().getMaxX() < mouseX))) {
+            if (line != null && (line.getBounds().getWidth() < 20 || (direction == 3 && shape.getBounds().getMinX() > mouseX) || (direction == 7 && shape.getBounds().getMaxX() < mouseX) || line.getBounds().getMinX() < 0 || line.getBounds().getMaxX() > content.getWidth()
+                    || line.getBounds().getY() < 0 || line.getBounds().getY() > content.getHeight())) {
                 resizedShape = shape;
             } else if (line != null && direction != 0) {
                 index = i;
-                if (pulleys.stream().filter(x -> x.tRope == shape || x.bRope == shape).findFirst().orElse(null) != null) {
-                    if (pulleys.stream().filter(x -> x.tRope == shape).findFirst().orElse(null) != null) {
-                        pulleys.stream().filter(x -> x.tRope == shape).findFirst().orElse(null).tRope = (Line2D)line;
-                    } else if (pulleys.stream().filter(x -> x.bRope == shape).findFirst().orElse(null) != null) {
-                        pulleys.stream().filter(x -> x.bRope == shape).findFirst().orElse(null).bRope = (Line2D)line;
-                    }
-                }
                 resizedShape = line;
                 content.shapes.set(i, line);
                 int pos = content.selectedShapes.indexOf(shape);
@@ -235,6 +230,24 @@ class ShapeManager {
                     content.selectedShapes.set(pos, line);
                 } else {
                     content.selectedShapes.add(line);
+                }
+                if (pulleys.stream().filter(x -> x.tRope == shape || x.bRope == shape).findFirst().orElse(null) != null) {
+                    Pulley pulley = pulleys.stream().filter(x -> x.tRope == shape || x.bRope == shape).findFirst().orElse(null);
+                    assert pulley != null;
+                    if (pulley.tRope == shape) {
+                        pulley.tRope = (Line2D) line;
+                        if (!content.selectedShapes.contains(pulley.bRope)) {
+                            content.selectedShapes.add(pulley.bRope);
+                        }
+                    } else if (pulley.bRope == shape) {
+                        pulley.bRope = (Line2D) line;
+                        if (!content.selectedShapes.contains(pulley.tRope)) {
+                            content.selectedShapes.add(pulley.tRope);
+                        }
+                    }
+                    if (!content.selectedShapes.contains(pulley.circle)) {
+                        content.selectedShapes.add(pulley.circle);
+                    }
                 }
             }
         } catch (NullPointerException e1) {
@@ -288,26 +301,20 @@ class ShapeManager {
         }
         try {
             // Check to make sure the rectangle does not get too small.
-            if (circle != null && (circle.getBounds().getWidth() < 20 || circle.getBounds().getHeight() < 20)) {
+            if (circle != null && (circle.getBounds().getWidth() < 20 || circle.getBounds().getHeight() < 20 || circle.getBounds().getMinX() < 0 || circle.getBounds().getMaxX() > content.getWidth()
+                    || circle.getBounds().getMinY() < 0 || circle.getBounds().getMaxY() > content.getHeight())) {
                 resizedShape = shape;
             } else if (circle != null && direction != 0) {
                 index = i;
                 resizedShape = circle;
-                //content.shapes.set(i, circle);
-                //int pos = content.selectedShapes.indexOf(shape);
-                //if (pos != -1) {
-                  //  content.selectedShapes.set(pos, circle);
-                //} else {
-                  //  content.selectedShapes.add(circle);
-                //}
                 Pulley pulley = pulleys.stream().filter(x -> x.circle == shape).findFirst().orElse(null);
                 if (pulley != null) {
                     Shape tRope = content.shapes.stream().filter(x -> x == pulley.tRope).findFirst().orElse(null);
                     Shape bRope = content.shapes.stream().filter(x -> x == pulley.bRope).findFirst().orElse(null);
                     if (tRope != null && bRope != null) {
                         int bRopeIndex = content.shapes.indexOf(bRope), tRopeIndex = content.shapes.indexOf(tRope);
-                        tRope = new Line2D.Double(circle.getBounds().getMaxX() - (circle.getBounds().getWidth() / 2), circle.getBounds().getMinY(), (circle.getBounds().getMaxX() - (circle.getBounds().getWidth() / 2)) + tRope.getBounds().getWidth(), circle.getBounds().getMinY());
-                        bRope = new Line2D.Double(circle.getBounds().getMaxX() - (circle.getBounds().getWidth() / 2), circle.getBounds().getMaxY(), (circle.getBounds().getMaxX() - (circle.getBounds().getWidth() / 2)) + bRope.getBounds().getWidth(), circle.getBounds().getMaxY());
+                        tRope = new Line2D.Double(Math.floor(circle.getBounds().getMaxX() - (circle.getBounds().getWidth() / 2)), circle.getBounds().getMinY(), Math.floor((circle.getBounds().getMaxX() - (circle.getBounds().getWidth() / 2)) + tRope.getBounds().getWidth()), circle.getBounds().getMinY());
+                        bRope = new Line2D.Double(Math.floor(circle.getBounds().getMaxX() - (circle.getBounds().getWidth() / 2)), circle.getBounds().getMaxY(), Math.floor((circle.getBounds().getMaxX() - (circle.getBounds().getWidth() / 2)) + bRope.getBounds().getWidth()), circle.getBounds().getMaxY());
                         content.shapes.set(i, circle);
                         int pos = content.selectedShapes.indexOf(shape);
                         if (pos != -1) {
@@ -315,15 +322,19 @@ class ShapeManager {
                         } else {
                             content.selectedShapes.add(circle);
                         }
-                        content.selectedShapes.set(tRopeIndex, tRope);
-                        pos = content.shapes.indexOf(pulley.tRope);
+                        content.shapes.set(tRopeIndex, tRope);
+                        pos = content.selectedShapes.indexOf(pulley.tRope);
                         if (pos != -1) {
-                            content.shapes.set(pos, tRope);
+                            content.selectedShapes.set(pos, tRope);
+                        } else {
+                            content.selectedShapes.add(tRope);
                         }
-                        content.selectedShapes.set(bRopeIndex, bRope);
-                        pos = content.shapes.indexOf(pulley.bRope);
+                        content.shapes.set(bRopeIndex, bRope);
+                        pos = content.selectedShapes.indexOf(pulley.bRope);
                         if (pos != -1) {
-                            content.shapes.set(pos, bRope);
+                            content.selectedShapes.set(pos, bRope);
+                        } else {
+                            content.selectedShapes.add(bRope);
                         }
                         pulleys.set(pulleys.indexOf(pulley), new Pulley((Ellipse2D) circle, (Line2D) bRope, (Line2D) tRope));
                     }
@@ -386,8 +397,8 @@ class ShapeManager {
             Shape bRope = content.selectedShapes.stream().filter(x -> x == pulley.bRope).findFirst().orElse(null);
             if (tRope != null && bRope != null) {
                 int bRopeIndex = content.selectedShapes.indexOf(bRope), tRopeIndex = content.selectedShapes.indexOf(tRope);
-                tRope = new Line2D.Double(circle.getBounds().getMaxX() - (circle.getBounds().getWidth() / 2), circle.getBounds().getMinY(), (circle.getBounds().getMaxX() - (circle.getBounds().getWidth() / 2)) + tRope.getBounds().getWidth(), circle.getBounds().getMinY());
-                bRope = new Line2D.Double(circle.getBounds().getMaxX() - (circle.getBounds().getWidth() / 2), circle.getBounds().getMaxY(), (circle.getBounds().getMaxX() - (circle.getBounds().getWidth() / 2)) + bRope.getBounds().getWidth(), circle.getBounds().getMaxY());
+                tRope = new Line2D.Double(Math.floor(circle.getBounds().getMaxX() - (circle.getBounds().getWidth() / 2)), circle.getBounds().getMinY(), Math.floor((circle.getBounds().getMaxX() - (circle.getBounds().getWidth() / 2)) + tRope.getBounds().getWidth()), circle.getBounds().getMinY());
+                bRope = new Line2D.Double(Math.floor(circle.getBounds().getMaxX() - (circle.getBounds().getWidth() / 2)), circle.getBounds().getMaxY(), Math.floor((circle.getBounds().getMaxX() - (circle.getBounds().getWidth() / 2)) + bRope.getBounds().getWidth()), circle.getBounds().getMaxY());
                 content.selectedShapes.set(i, circle);
                 int pos = content.shapes.indexOf(shape);
                 content.shapes.set(pos, circle);
@@ -454,8 +465,12 @@ class ShapeManager {
                 if (shape.getClass() == Line2D.Double.class) {
                     Shape line = new Line2D.Double(e.getPoint().x, e.getPoint().y, shape.getBounds2D().getMaxX(), shape.getBounds2D().getY());
                     content.shapes.set(i, line);
-                    int pos = content.shapes.indexOf(shape);
-                    content.shapes.set(pos, line);
+                    int pos = content.selectedShapes.indexOf(shape);
+                    if (pos != -1) {
+                        content.selectedShapes.set(pos, line);
+                    } else {
+                        content.selectedShapes.add(line);
+                    }
                 } else if (shape.getClass() == Ellipse2D.Double.class) {
 
                 }
@@ -472,6 +487,7 @@ class ShapeManager {
     private void enterRopeDetails(int i) {
         String data = "Tension";
         Rope rope = ropes.stream().filter(x -> x.getShapeIndex() == i).findFirst().orElse(null);
+        assert rope != null;
         Double value = rope.getTension();
         try {
             List<String> arr = new InputField("Rope Details - Leave blank if unknown", data, value).data;
@@ -502,6 +518,7 @@ class ShapeManager {
     private void enterObjectDetails(int i) {
         ArrayList<String> data = new ArrayList<>(Arrays.asList("Mass", "Weight", "Resultant force", "Left force", "Right force"));
         Entity entity = entities.stream().filter(x -> x.getShapeIndex() == i).findFirst().orElse(null);
+        assert entity != null;
         ArrayList<Double> values = new ArrayList<>(Arrays.asList(entity.getMass(), entity.getWeight(), entity.getResultantForce(), entity.getLeftForce(), entity.getRightForce()));
         data = new InputField("Object Details - Leave blank if unknown", data, values).data;
         for (int j = 0; j < data.size(); j++) {
@@ -553,7 +570,7 @@ class ShapeManager {
                     gui.showMessageBox("Right force must be a double.", "Error");
                 }
             } else if (j == 4) {
-               entity.setRightForce(0);
+                entity.setRightForce(0);
             }
         }
     }
@@ -570,6 +587,21 @@ class ShapeManager {
                                 return shape;
                             } else {
                                 content.selectedShapes.add(shape);
+                                content.repaint();
+                                return shape;
+                            }
+                        } else {
+                            if (e.isControlDown()) {
+                                Pulley pulley = pulleys.stream().filter(x -> x.bRope == shape || x.tRope == shape).findFirst().orElse(null);
+                                assert pulley != null;
+                                enterRopeDetails(content.shapes.indexOf(pulley.circle));
+                                return shape;
+                            } else {
+                                Pulley pulley = pulleys.stream().filter(x -> x.bRope == shape || x.tRope == shape).findFirst().orElse(null);
+                                assert pulley != null;
+                                content.selectedShapes.add(pulley.circle);
+                                content.selectedShapes.add(pulley.tRope);
+                                content.selectedShapes.add(pulley.bRope);
                                 content.repaint();
                                 return shape;
                             }
@@ -596,7 +628,11 @@ class ShapeManager {
                             enterRopeDetails(i);
                             return shape;
                         } else {
-                            content.selectedShapes.add(shape);
+                            Pulley pulley = pulleys.stream().filter(x -> x.circle == shape).findFirst().orElse(null);
+                            assert pulley != null;
+                            content.selectedShapes.add(pulley.circle);
+                            content.selectedShapes.add(pulley.tRope);
+                            content.selectedShapes.add(pulley.bRope);
                             content.repaint();
                             return shape;
                         }
@@ -620,6 +656,23 @@ class ShapeManager {
                             } else {
                                 if (content.selectedShapes.get(i) == shape) {
                                     content.selectedShapes.remove(shape);
+                                    i = content.selectedShapes.size();
+                                }
+                                content.repaint();
+                            }
+                        } else {
+                            if (e.isControlDown()) {
+                                Pulley pulley = pulleys.stream().filter(x -> x.bRope == shape || x.tRope == shape).findFirst().orElse(null);
+                                assert pulley != null;
+                                enterRopeDetails(content.shapes.indexOf(pulley.circle));
+                                i = content.selectedShapes.size();
+                            } else {
+                                if (content.selectedShapes.get(i) == shape) {
+                                    Pulley pulley = pulleys.stream().filter(x -> x.bRope == shape || x.tRope == shape).findFirst().orElse(null);
+                                    assert pulley != null;
+                                    content.selectedShapes.remove(pulley.circle);
+                                    content.selectedShapes.remove(pulley.tRope);
+                                    content.selectedShapes.remove(pulley.bRope);
                                     i = content.selectedShapes.size();
                                 }
                                 content.repaint();
@@ -648,7 +701,11 @@ class ShapeManager {
                             i = content.selectedShapes.size();
                         } else {
                             if (content.selectedShapes.get(i) == shape) {
-                                content.selectedShapes.remove(shape);
+                                Pulley pulley = pulleys.stream().filter(x -> x.circle == shape).findFirst().orElse(null);
+                                assert pulley != null;
+                                content.selectedShapes.remove(pulley.circle);
+                                content.selectedShapes.remove(pulley.tRope);
+                                content.selectedShapes.remove(pulley.bRope);
                                 i = content.selectedShapes.size();
                             }
                             content.repaint();
@@ -679,7 +736,7 @@ class ShapeManager {
             hasFriction = (!arr.contains("False") && arr.size() > 0);
             if (showSettingsPanel()) {
                 final Solver solver = new Solver(this);
-                solver.LinkRopesToEntities(ropes, entities);
+                solver.LinkRopesToEntities(ropes, entities, pulleys);
                 if (solver.allRopesConnected(ropes)) {
                     ArrayList<String> selections = new ArrayList<>();
                     if (time == null)
@@ -724,8 +781,6 @@ class ShapeManager {
                         }
                         if (selections.size() > 0) {
                             solver.calculateSelections(selections);
-                        } else {
-
                         }
                     }
                 } else {
